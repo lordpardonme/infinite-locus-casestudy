@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infinite Locus — Product Decision Flow Redesign</title>
+<meta name="description" content="Senior Product Designer Case Study — Mobile Product Decision Flow Redesign for Infinite Locus">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #F7F6F3;
+  --bg-card: #FFFFFF;
+  --bg-card-alt: #FFFFFF;
+  --text: #111111;
+  --text-dim: #6B6B6B;
+  --text-muted: #9A9A9A;
+  --accent: #5B46D6;
+  --accent-glow: #F3F0FF;
+  --accent-border: #E5E1DA;
+  --red: #E05555;
+  --green: #74B96B;
+  --blue: #5B8DEF;
+  --purple: #5B46D6;
+  --border: #E5E1DA;
+  --font-h: 'Outfit', sans-serif;
+  --font-b: 'Inter', sans-serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html, body { height:100%; background:var(--bg); color:var(--text); font-family:var(--font-b); overflow:hidden; -webkit-font-smoothing:antialiased; }
+
+/* ===== DECK ===== */
+.deck { width:100vw; height:100vh; position:relative; }
+
+.slide {
+  position:absolute; inset:0;
+  display:none; /* hidden by default */
+  flex-direction:column; justify-content:center; align-items:center;
+  padding:48px 72px 80px;
+  overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--text-muted) transparent;
+}
+.slide.active {
+  display:flex;
+  animation: slideIn 0.45s var(--ease) forwards;
+}
+@keyframes slideIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+.slide-inner { max-width:1080px; width:100%; }
+
+/* ===== TYPOGRAPHY ===== */
+.sn { font-family:var(--font-h); font-size:11px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin-bottom:10px; }
+h1 { font-family:var(--font-h); font-size:clamp(38px,5vw,66px); font-weight:800; line-height:1.06; letter-spacing:-1.5px; margin-bottom:18px; }
+h2 { font-family:var(--font-h); font-size:clamp(28px,3.5vw,42px); font-weight:700; line-height:1.12; letter-spacing:-0.8px; margin-bottom:12px; }
+h3 { font-family:var(--font-h); font-size:17px; font-weight:600; margin-bottom:8px; }
+p, li { font-size:15px; line-height:1.7; color:var(--text-dim); }
+.sub { font-size:17px; line-height:1.6; color:var(--text-dim); max-width:640px; margin-bottom:20px; }
+.hl { color:var(--accent); font-weight:600; }
+.tw { color:var(--text); }
+blockquote { border-left:3px solid var(--accent); padding:14px 22px; margin:20px 0; background:var(--accent-glow); border-radius:0 8px 8px 0; font-size:17px; font-style:italic; color:var(--text); line-height:1.55; }
+
+/* ===== LAYOUT ===== */
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; }
+.g4 { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+.g6 { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; }
+.mt8 { margin-top:8px; } .mt16 { margin-top:16px; } .mt24 { margin-top:24px; } .mt32 { margin-top:32px; } .mt40 { margin-top:40px; }
+.mb8 { margin-bottom:8px; } .mb12 { margin-bottom:12px; } .mb16 { margin-bottom:16px; }
+.center { text-align:center; }
+
+/* ===== CARDS ===== */
+.c { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:24px; }
+.c:hover { border-color:var(--accent-border); }
+.c-a { background:linear-gradient(135deg, var(--accent-glow), transparent); border-color:var(--accent-border); }
+.c-top-r { border-top:3px solid var(--red); }
+.c-top-g { border-top:3px solid var(--green); }
+.c-top-y { border-top:3px solid var(--accent); }
+.c-top-b { border-top:3px solid var(--blue); }
+.c-top-p { border-top:3px solid var(--purple); }
+.c-left-a { border-left:3px solid var(--accent); }
+.c-left-r { border-left:3px solid var(--red); }
+
+/* ===== TAGS ===== */
+.tag { display:inline-block; padding:3px 10px; border-radius:100px; font-size:11px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; }
+.tag-a { background:var(--accent-glow); color:var(--accent); border:1px solid var(--accent-border); }
+.tag-m { background:rgba(255,255,255,0.03); color:var(--text-muted); border:1px solid var(--border); }
+.tag-s { background:var(--accent); color:var(--bg); }
+.tag-r { background:rgba(224,85,85,0.1); color:var(--red); border:1px solid rgba(224,85,85,0.2); }
+.tag-g { background:rgba(76,201,138,0.1); color:var(--green); border:1px solid rgba(76,201,138,0.2); }
+
+/* ===== TABLE ===== */
+table { width:100%; border-collapse:collapse; margin-top:12px; }
+th { text-align:left; padding:10px 14px; font-family:var(--font-h); font-size:11px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--accent); border-bottom:1px solid var(--accent-border); }
+td { padding:12px 14px; font-size:14px; color:var(--text-dim); border-bottom:1px solid var(--border); vertical-align:top; }
+
+/* ===== IMAGES ===== */
+.mockup-row { display:flex; gap:28px; justify-content:center; align-items:flex-start; margin-top:24px; }
+.mockup-item { text-align:center; flex:1; max-width:260px; }
+.mockup-item img { width:100%; border-radius:14px; border:1px solid var(--border); box-shadow:0 14px 44px rgba(0,0,0,0.4); transition:transform 0.35s var(--ease); }
+.mockup-item img:hover { transform:scale(1.03) translateY(-3px); }
+.mockup-lbl { margin-top:10px; font-size:12px; font-weight:500; color:var(--text-muted); }
+
+/* ===== WIREFRAME MOCK (CSS-built) ===== */
+.wf-row { display:flex; gap:16px; justify-content:center; align-items:flex-start; margin-top:20px; overflow-x:auto; padding:8px 0; }
+.wf-phone { width:150px; min-width:150px; background:#FFFFFF; border:1px solid var(--border); border-radius:14px; padding:8px; font-size:0; box-shadow:0 4px 12px rgba(0,0,0,0.04); }
+.wf-status { height:10px; background:rgba(0,0,0,0.03); border-radius:4px; margin-bottom:6px; }
+.wf-img { height:80px; background:rgba(0,0,0,0.04); border-radius:6px; margin-bottom:6px; display:flex; align-items:center; justify-content:center; font-size:20px; color:rgba(0,0,0,0.2); }
+.wf-title { height:8px; width:70%; background:rgba(0,0,0,0.12); border-radius:2px; margin-bottom:4px; }
+.wf-price { height:6px; width:35%; background:rgba(91,70,214,0.3); border-radius:2px; margin-bottom:6px; }
+.wf-line { height:5px; width:90%; background:rgba(0,0,0,0.05); border-radius:2px; margin-bottom:3px; }
+.wf-line-s { height:5px; width:60%; background:rgba(0,0,0,0.05); border-radius:2px; margin-bottom:3px; }
+.wf-btn { height:16px; background:rgba(91,70,214,0.1); border:1px solid rgba(91,70,214,0.2); border-radius:4px; margin-top:6px; display:flex; align-items:center; justify-content:center; }
+.wf-btn span { font-size:7px; color:var(--accent); font-weight:600; letter-spacing:0.5px; }
+.wf-fit { height:18px; background:var(--accent-glow); border:1px solid var(--accent-border); border-radius:4px; margin:4px 0; display:flex; align-items:center; justify-content:center; }
+.wf-fit span { font-size:7px; color:var(--accent); font-weight:600; }
+.wf-pills { display:flex; gap:3px; margin:4px 0; }
+.wf-pill { flex:1; height:14px; background:rgba(0,0,0,0.05); border-radius:3px; }
+.wf-pill.active { background:rgba(91,70,214,0.2); border:1px solid rgba(91,70,214,0.3); }
+.wf-label { font-size:9px; color:var(--text-dim); text-align:center; margin-top:8px; font-weight:500; font-family:var(--font-h); letter-spacing:0.5px; }
+.wf-arrow { display:flex; align-items:center; color:var(--accent); font-size:18px; opacity:0.4; min-width:16px; margin-top:40px; }
+.wf-sheet { background:rgba(0,0,0,0.02); border:1px solid rgba(0,0,0,0.06); border-radius:6px; padding:6px; margin-top:auto; }
+.wf-table-row { display:flex; gap:2px; margin-bottom:2px; }
+.wf-table-cell { flex:1; height:8px; background:rgba(0,0,0,0.04); border-radius:1px; }
+.wf-table-cell.hdr { background:rgba(0,0,0,0.08); }
+.wf-thumb { width:28px; height:28px; background:rgba(0,0,0,0.06); border-radius:4px; flex-shrink:0; }
+.wf-row-flex { display:flex; gap:6px; align-items:center; margin-bottom:4px; }
+
+/* ===== WIREFRAME IMAGE CARDS (redesigned) ===== */
+.wf-img-card {
+  height: 480px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 14px 44px rgba(0,0,0,0.06);
+  transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease), border-color 0.35s var(--ease);
+}
+.wf-img-card:hover {
+  transform: scale(1.03) translateY(-4px);
+  box-shadow: 0 20px 48px rgba(0,0,0,0.12);
+  border-color: var(--accent-border);
+}
+.wf-img-card img {
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+.slide[data-slide="9"] .wf-arrow {
+  align-self: center;
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+/* ===== ZOOMABLE IMAGES (click-to-expand) ===== */
+.zoomable-image {
+  cursor: zoom-in;
+  transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease), border-color 0.35s var(--ease);
+}
+.zoomable-image:hover {
+  transform: scale(1.02) translateY(-3px);
+  box-shadow: 0 16px 36px rgba(0,0,0,0.12) !important;
+  border-color: var(--accent-border) !important;
+}
+
+
+/* ===== METRIC ===== */
+.mv { font-family:var(--font-h); font-size:28px; font-weight:700; color:var(--accent); margin-bottom:4px; }
+.ml { font-size:13px; color:var(--text-muted); line-height:1.4; }
+
+/* ===== FIT CARD ===== */
+.fit-card { background:var(--bg-card); border:1px solid var(--accent-border); border-radius:14px; padding:28px; max-width:400px; }
+.fit-badge { display:flex; align-items:center; gap:12px; padding:14px 18px; background:var(--accent-glow); border:1px solid var(--accent-border); border-radius:8px; margin-bottom:14px; }
+.fit-score { font-family:var(--font-h); font-size:26px; font-weight:700; color:var(--accent); }
+.fit-row { display:flex; align-items:center; gap:10px; padding:8px 0; font-size:14px; color:var(--text-dim); border-bottom:1px solid var(--border); }
+.fit-row:last-child { border-bottom:none; }
+
+/* ===== PRIORITY ===== */
+.pri { display:flex; gap:8px; align-items:center; padding:9px 0; border-bottom:1px solid var(--border); }
+.pri-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.pri-dot.h { background:var(--accent); }
+.pri-dot.m { background:var(--text-muted); }
+
+/* ===== NAV ===== */
+.nav {
+  position:fixed; bottom:0; left:0; right:0; height:52px;
+  background:rgba(247,246,243,0.9); backdrop-filter:blur(16px);
+  border-top:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 28px; z-index:100;
+}
+.nav-dots { display:flex; align-items:center; gap:4px; }
+.nav-dot { width:6px; height:6px; border-radius:50%; background:var(--text-muted); opacity:0.35; cursor:pointer; transition:all 0.25s; }
+.nav-dot.on { width:22px; border-radius:3px; background:var(--accent); opacity:1; }
+.nav-dot:hover { opacity:0.6; }
+.nav-ctrl { display:flex; align-items:center; gap:12px; }
+.nav-btn { background:none; border:1px solid var(--border); color:var(--text-dim); width:34px; height:34px; border-radius:7px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:15px; transition:all 0.2s; }
+.nav-btn:hover { border-color:var(--accent); color:var(--accent); }
+.nav-cnt { font-family:var(--font-h); font-size:12px; color:var(--text-dim); letter-spacing:1px; min-width:48px; text-align:center; }
+.nav-hint { font-size:10px; color:var(--text-dim); opacity:0.8; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; }
+.nav-key { display:inline-flex; align-items:center; justify-content:center; width:20px; height:18px; border:1px solid rgba(0,0,0,0.1); border-radius:3px; font-size:9px; color:var(--text-dim); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width:900px) { .slide { padding:36px 28px 72px; } .g2,.g3,.g4,.g6 { grid-template-columns:1fr; } .mockup-row,.wf-row { flex-direction:column; align-items:center; } }
+
+/* ===== STAGGER ===== */
+.slide.active .slide-inner > * { animation: fadeUp 0.4s var(--ease) forwards; opacity:0; }
+.slide.active .slide-inner > *:nth-child(1) { animation-delay:0.04s; }
+.slide.active .slide-inner > *:nth-child(2) { animation-delay:0.1s; }
+.slide.active .slide-inner > *:nth-child(3) { animation-delay:0.16s; }
+.slide.active .slide-inner > *:nth-child(4) { animation-delay:0.22s; }
+.slide.active .slide-inner > *:nth-child(5) { animation-delay:0.28s; }
+.slide.active .slide-inner > *:nth-child(6) { animation-delay:0.34s; }
+.slide.active .slide-inner > *:nth-child(7) { animation-delay:0.40s; }
+.slide.active .slide-inner > *:nth-child(8) { animation-delay:0.46s; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+
+.slide::-webkit-scrollbar { width:3px; }
+.slide::-webkit-scrollbar-track { background:transparent; }
+.slide::-webkit-scrollbar-thumb { background:var(--text-muted); border-radius:2px; }
+
+/* ===== LIGHTBOX MODAL ===== */
+.lightbox {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  background: rgba(17, 17, 17, 0.85);
+  backdrop-filter: blur(16px);
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  opacity: 0;
+  transition: opacity 0.3s var(--ease);
+}
+.lightbox img {
+  max-width: 90%;
+  max-height: 82vh;
+  object-fit: contain;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+  transform: scale(0.93) translateY(20px);
+  transition: transform 0.4s var(--ease);
+}
+.lightbox.active img {
+  transform: scale(1) translateY(0);
+}
+.lightbox-close {
+  position: absolute;
+  top: 24px;
+  right: 32px;
+  color: #FFFFFF;
+  font-size: 36px;
+  font-weight: 200;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s, transform 0.2s;
+  user-select: none;
+  padding: 8px;
+  z-index: 1001;
+}
+.lightbox-close:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+.lightbox-caption {
+  color: rgba(255, 255, 255, 0.7);
+  font-family: var(--font-h);
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 20px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+/* ===== SLIDE 9 REDESIGN ===== */
+.flow-pill {
+  height: 34px;
+  background: #FFFFFF;
+  border: 1px solid #D8D0C4;
+  border-radius: 18px;
+  padding: 0 12px;
+  font-size: 13px;
+  color: #111111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+.flow-pill-highlight {
+  background: #EAF3EA;
+  color: #1F6D47;
+  border: 1px solid #EAF3EA;
+  font-weight: 600;
+}
+.flow-arrow {
+  color: #275EFE;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+
+/* ===== SLIDE 12 REDESIGN SPECIFIC STYLES ===== */
+.slide-11-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 64px;
+  align-items: start;
+  margin-top: 16px;
+}
+@media (max-width: 950px) {
+  .slide-11-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+.mockups-wrapper {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 64px;
+  position: relative;
+}
+@media (max-width: 950px) {
+  .mockups-wrapper {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+.mockup-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+.mockup-card-title {
+  font-family: var(--font-h);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 2px;
+  letter-spacing: 0.5px;
+}
+.mockup-card-sub {
+  font-size: 10px;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 12px;
+  line-height: 1.35;
+  min-height: 28px;
+}
+@media (max-width: 950px) {
+  .mockup-card-sub {
+    min-height: auto;
+  }
+}
+
+.mockup-img-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 170px;
+  margin: 0 auto;
+}
+.mockup-img-wrap img {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  display: block;
+}
+
+/* Annotations callouts styling */
+.anno-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--accent-border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text-dim);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  z-index: 10;
+  transition: all 0.3s var(--ease);
+}
+.anno-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+.anno-card strong {
+  color: var(--text);
+}
+
+/* Desktop absolute annotation placement */
+@media (min-width: 951px) {
+  .anno-absolute {
+    position: absolute;
+  }
+  
+  /* Screen 01 annotations */
+  .anno-s1-1 {
+    left: -16px;
+    transform: translateX(-100%);
+    top: 32%;
+    width: 130px;
+    text-align: right;
+  }
+  .anno-s1-2 {
+    left: -16px;
+    transform: translateX(-100%);
+    top: 65%;
+    text-align: right;
+    width: 130px;
+  }
+  
+  /* Screen 02 annotations */
+  .anno-s2-1 {
+    left: -16px;
+    transform: translateX(-100%);
+    top: 58%;
+    text-align: right;
+    width: 130px;
+  }
+  .anno-s2-2 {
+    right: -16px;
+    transform: translateX(100%);
+    top: 22%;
+    text-align: left;
+    width: 130px;
+  }
+  
+  /* Screen 03 annotations */
+  .anno-s3-1 {
+    right: -16px;
+    transform: translateX(100%);
+    top: 45%;
+    text-align: left;
+    width: 130px;
+  }
+}
+
+/* Mobile responsive annotations stack */
+@media (max-width: 950px) {
+  .anno-absolute {
+    position: relative;
+    margin-top: 8px;
+    max-width: 100%;
+    width: 100%;
+    text-align: left !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+  }
+}
+
+/* Bottom section styles */
+.bottom-section-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 32px;
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+  margin-top: 28px;
+  align-items: start;
+}
+@media (max-width: 950px) {
+  .bottom-section-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+.how-it-works-title, .impact-title {
+  font-family: var(--font-h);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+.flow-steps {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+@media (max-width: 600px) {
+  .flow-steps {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+.step-box {
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  transition: all 0.25s var(--ease);
+}
+.step-box:hover {
+  border-color: var(--accent-border);
+  transform: translateY(-2px);
+}
+.step-box-num {
+  font-family: var(--font-h);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.step-box-title {
+  font-family: var(--font-h);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.step-box-desc {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text-dim);
+}
+
+.step-box.highlight {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+.step-box.highlight .step-box-title {
+  color: var(--accent);
+}
+
+.impact-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+@media (max-width: 600px) {
+  .impact-metrics-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.metric-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 6px;
+  text-align: center;
+  transition: all 0.25s var(--ease);
+}
+.metric-card:hover {
+  border-color: var(--accent-border);
+  transform: translateY(-2px);
+}
+.metric-card-val {
+  font-family: var(--font-h);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--green);
+  margin-bottom: 3px;
+}
+.metric-card-lbl {
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+/* Strategic Shift Dark Card */
+.strategic-shift-dark-card {
+  background: #111111;
+  color: #FFFFFF;
+  border-radius: 12px;
+  padding: 24px 32px;
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 32px;
+  align-items: center;
+}
+@media (max-width: 800px) {
+  .strategic-shift-dark-card {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
+}
+
+.shift-left-title {
+  font-family: var(--font-h);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--accent);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.shift-left-heading {
+  font-family: var(--font-h);
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+.shift-left-heading span {
+  color: var(--accent);
+}
+.shift-left-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #9A9A9A;
+}
+
+.shift-right-inner {
+  border-left: 1px solid rgba(255,255,255,0.1);
+  padding-left: 20px;
+}
+@media (max-width: 800px) {
+  .shift-right-inner {
+    border-left: none;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-left: 0;
+    padding-top: 12px;
+  }
+}
+
+.shift-right-title {
+  font-family: var(--font-h);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #FFFFFF;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.shift-right-title::before {
+  content: '✦';
+  color: var(--accent);
+  font-size: 8px;
+}
+.shift-right-desc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #9A9A9A;
+}
+
+/* ===== 5-COLUMN MOCKUP GRID FOR SLIDE 11 ===== */
+.five-mockups-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  margin-top: 24px;
+}
+@media (max-width: 950px) {
+  .five-mockups-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+}
+@media (max-width: 650px) {
+  .five-mockups-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+@media (max-width: 450px) {
+  .five-mockups-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* ===== A11Y: FOCUS-VISIBLE ===== */
+.nav-btn:focus-visible,
+.nav-dot:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.zoomable-image:focus-visible,
+.wf-img-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+.lightbox-close:focus-visible {
+  outline: 2px solid #FFFFFF;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* ===== A11Y: REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+</style>
+</head>
+<body>
+<main>
+<div class="deck" id="deck">
+
+<!-- ====== 01 COVER ====== -->
+<div class="slide active" data-slide="0">
+  <div class="slide-inner center">
+    <div class="sn">Senior Product Designer · Assignment</div>
+    <h1 style="background:linear-gradient(135deg,var(--text),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Product Decision<br>Flow Redesign</h1>
+    <p class="sub" style="margin:0 auto 20px;max-width:560px;">Turning product desire into purchase confidence — a mobile-first intervention at the moment of commitment.</p>
+    <div style="width:50px;height:2px;background:var(--accent);margin:20px auto;"></div>
+    <p style="font-size:16px;color:var(--text-dim);margin-bottom:6px;">Mohd Hayaat Ali</p>
+    <p style="font-size:13px;color:var(--text-muted);letter-spacing:1.5px;">INFINITE LOCUS · 2026</p>
+  </div>
+</div>
+
+<!-- ====== 02 BRIEF DECODING ====== -->
+<div class="slide" data-slide="1">
+  <div class="slide-inner">
+    <div class="sn">02 / 16</div>
+    <h2>Brief Decoding &amp; Selected Flow</h2>
+    <p class="sub">The assignment offers three mobile UX flows. I chose to go deep on one rather than shallow across all three.</p>
+
+    <div class="g3 mt24">
+      <div class="c" style="opacity:0.45;">
+        <p style="font-size:20px;margin-bottom:10px;">🔍</p>
+        <h3>Product Discovery</h3>
+        <p style="font-size:13px;">Home → Listing → Filters → PDP</p>
+        <div class="mt8"><span class="tag tag-m">Not selected</span></div>
+      </div>
+      <div class="c c-a">
+        <p style="font-size:20px;margin-bottom:10px;">🎯</p>
+        <h3>Product Decision</h3>
+        <p style="font-size:13px;">PDP → Variant Selection → Add to Cart</p>
+        <div class="mt8"><span class="tag tag-s">Selected</span></div>
+      </div>
+      <div class="c" style="opacity:0.45;">
+        <p style="font-size:20px;margin-bottom:10px;">🚀</p>
+        <h3>Drop Launch</h3>
+        <p style="font-size:13px;">Announcement → Landing → Limited PDP → Cart</p>
+        <div class="mt8"><span class="tag tag-m">Not selected</span></div>
+      </div>
+    </div>
+
+    <div class="c c-left-a mt24" style="padding:20px 24px;">
+      <h3 style="color:var(--accent);">Why this flow wins</h3>
+      <p>The brief explicitly calls out that <span class="hl">"the experience deteriorates as users move deeper into the funnel"</span> and that <span class="hl">"checkout abandonment is high, particularly on mobile."</span> Product Decision is the last moment before conversion — the highest-leverage point to improve. It directly connects to Add-to-Cart rate, the most actionable metric.</p>
+    </div>
+
+    <div class="c mt16" style="padding:16px 24px;">
+      <p style="font-size:13px;color:var(--text-muted);"><strong class="tw">Out of scope:</strong> Full checkout redesign, PLP/filter redesign, loyalty program, drop-launch infrastructure. These are important but solving decision confidence has the highest immediate ROI.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 03 ASSUMPTIONS ====== -->
+<div class="slide" data-slide="2">
+  <div class="slide-inner">
+    <div class="sn">03 / 16</div>
+    <h2>Assumptions</h2>
+    <p class="sub">No live website, analytics, session recordings, or user research was provided. This audit is hypothesis-led — all assumptions are stated explicitly so they can be validated.</p>
+
+    <table class="mt24">
+      <thead><tr><th>Stated Assumption</th><th>Unknown</th><th>Evidence Basis</th></tr></thead>
+      <tbody>
+        <tr><td class="tw">Most traffic is mobile, often from social/creator posts or drop campaigns</td><td>Actual mobile vs. desktop split</td><td>Brief: "checkout abandonment high on mobile"</td></tr>
+        <tr><td class="tw">Highest PDP hesitation: fit uncertainty, size confusion, delivery timing, return safety</td><td>Actual funnel drop-off data</td><td>Baymard fashion UX research; market audit</td></tr>
+        <tr><td class="tw">Guest checkout exists — adding to bag doesn't require sign-in</td><td>Actual auth flow</td><td>DTC industry standard</td></tr>
+        <tr><td class="tw">Inventory is available at size/variant level, enabling stock messaging</td><td>Actual inventory API</td><td>Commerce platform capabilities</td></tr>
+        <tr><td class="tw">Brand voice: confident, minimal, premium editorial</td><td>Full brand guidelines</td><td>Brief: "confident, minimal, culturally aware"</td></tr>
+        <tr><td class="tw">Redesign must improve Add-to-Bag rate without increasing size-related returns</td><td>Current return rate and reasons</td><td>Fashion return research (fit is #1 reason)</td></tr>
+        <tr><td class="tw">Size guide and delivery info are technically feasible with existing data</td><td>Actual CMS / API structure</td><td>Standard commerce capabilities</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ====== 04 EXPERIENCE AUDIT ====== -->
+<div class="slide" data-slide="3">
+  <div class="slide-inner">
+    <div class="sn">04 / 16</div>
+    <h2>Experience Audit</h2>
+    <p class="sub">Mobile PDP patterns across Indian fashion platforms — what creates desire, and where confidence breaks down.</p>
+
+    <div class="g2 mt24" style="gap:28px;">
+      <div class="center">
+        <img loading="lazy" src="assets/indian_pdp_audit_1.png" alt="Marketplace PDP audit" style="width:100%;max-width:240px;border-radius:10px;border:1px solid var(--border);box-shadow:0 10px 32px rgba(0,0,0,0.3);">
+        <p style="font-size:11px;color:var(--text-muted);margin-top:6px;">Marketplace PDP — offer-heavy, no fit guidance</p>
+      </div>
+      <div class="center">
+        <img loading="lazy" src="assets/indian_pdp_audit_2.png" alt="DTC Brand PDP audit" style="width:100%;max-width:240px;border-radius:10px;border:1px solid var(--border);box-shadow:0 10px 32px rgba(0,0,0,0.3);">
+        <p style="font-size:11px;color:var(--text-muted);margin-top:6px;">DTC Brand PDP — clean, but trust cues missing near CTA</p>
+      </div>
+    </div>
+
+    <div class="g2 mt24">
+      <div>
+        <h3 style="color:var(--red);margin-bottom:12px;">⚠ Observed Friction</h3>
+        <div class="c mb8" style="padding:14px 18px;">
+          <span class="tag tag-r mb8" style="display:block;width:fit-content;">F1 — Size Uncertainty</span>
+          <p style="font-size:13px;">Users guess their size without model measurements, fit type, or recommendation. Size guides open in new pages, losing PDP context.</p>
+        </div>
+        <div class="c mb8" style="padding:14px 18px;">
+          <span class="tag tag-r mb8" style="display:block;width:fit-content;">F2 — Late Trust Cues</span>
+          <p style="font-size:13px;">Delivery date, return policy, and exchange info are buried 3+ scrolls below the CTA — far from the decision moment.</p>
+        </div>
+        <div class="c mb8" style="padding:14px 18px;">
+          <span class="tag tag-r mb8" style="display:block;width:fit-content;">F3 — Offer Noise</span>
+          <p style="font-size:13px;">Coupon banners, "X% OFF" badges, and bank offers clutter the first fold. Decision clarity drops under promotional noise.</p>
+        </div>
+        <div class="c" style="padding:14px 18px;">
+          <span class="tag tag-r mb8" style="display:block;width:fit-content;">F4 — Weak Confirmation</span>
+          <p style="font-size:13px;">Add-to-Bag triggers a small toast or redirect. No product summary, no size validation, no clear next step.</p>
+        </div>
+      </div>
+      <div>
+        <h3 style="color:var(--green);margin-bottom:12px;">✓ Patterns That Work</h3>
+        <div class="c mb8" style="padding:14px 18px;">
+          <span class="tag tag-g mb8" style="display:block;width:fit-content;">Strong</span>
+          <p style="font-size:13px;"><strong class="tw">Full-bleed product imagery</strong> creates immediate visual desire. The top of the funnel works well.</p>
+        </div>
+        <div class="c mb8" style="padding:14px 18px;">
+          <span class="tag tag-g mb8" style="display:block;width:fit-content;">Strong</span>
+          <p style="font-size:13px;"><strong class="tw">Clear CTA placement</strong> helps users identify "Add to Bag" or "Buy Now" quickly.</p>
+        </div>
+        <div class="c mb8" style="padding:14px 18px;">
+          <span class="tag tag-g mb8" style="display:block;width:fit-content;">Strong</span>
+          <p style="font-size:13px;"><strong class="tw">Reviews and ratings</strong> provide social proof and trust signals when placed near the action.</p>
+        </div>
+        <div class="c" style="padding:14px 18px;">
+          <span class="tag tag-g mb8" style="display:block;width:fit-content;">Strong</span>
+          <p style="font-size:13px;"><strong class="tw">Bottom sheet patterns</strong> keep users in context during size/variant selection on mobile.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 05 AUDIT SYNTHESIS ====== -->
+<div class="slide" data-slide="4">
+  <div class="slide-inner">
+    <div class="sn">05 / 16</div>
+    <h2>Audit Synthesis</h2>
+    <blockquote>"Desire is visible. Confidence is missing."</blockquote>
+
+    <div class="g4 mt32">
+      <div class="c c-top-g" style="padding:20px;">
+        <h3>Desire Builders</h3>
+        <p style="font-size:13px;">Full-bleed imagery, campaign storytelling, and editorial layout create strong product desire. <span class="hl">The top of the funnel works.</span></p>
+      </div>
+      <div class="c c-top-r" style="padding:20px;">
+        <h3>Decision Friction</h3>
+        <p style="font-size:13px;">Size uncertainty, missing fit context, and unguided variant selection create hesitation at the <span class="hl">moment of commitment.</span></p>
+      </div>
+      <div class="c c-top-y" style="padding:20px;">
+        <h3>Trust Gaps</h3>
+        <p style="font-size:13px;">Delivery, returns, and exchange info exist but are <span class="hl">positioned too far from the CTA</span> to reduce purchase anxiety.</p>
+      </div>
+      <div class="c c-top-p" style="padding:20px;">
+        <h3>Missed Recovery</h3>
+        <p style="font-size:13px;">Unavailable sizes, uncertain shoppers, and post-ATB flow <span class="hl">lack recovery paths</span> to retain the user.</p>
+      </div>
+    </div>
+
+    <div class="c c-left-a mt24 center" style="padding:18px 24px;">
+      <p style="font-size:14px;"><span class="hl">Behaviour pattern:</span> Users scan imagery first → then look for practical reassurance (fit, delivery, returns). If reassurance is weak or late, they <strong class="tw">delay, abandon, or order the wrong size</strong> — creating returns that erode margin and loyalty.</p>
+    </div>
+
+    <div class="c mt16" style="padding:16px 24px;">
+      <p style="font-size:13px;color:var(--text-muted);"><strong class="tw">Evidence:</strong> Baymard research shows 46% of fashion returns cite poor fit. Zalando's size recommendation reduced returns by ~10%. The confidence gap is real and measurable.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 06 JOURNEY CONTEXT ====== -->
+<div class="slide" data-slide="5">
+  <div class="slide-inner">
+    <div class="sn">06 / 16</div>
+    <h2>Journey Context</h2>
+    <p class="sub">Where does the Product Decision Flow sit within the shopper's journey?</p>
+
+    <div class="g3 mt32 center">
+      <div class="c" style="padding:28px 20px;">
+        <p style="font-size:10px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">Phase 1 — Awareness</p>
+        <h3 style="font-size:20px;">Desire</h3>
+        <p style="font-size:13px;">Social post, creator content, drop campaign, or homepage editorial catches the eye.</p>
+        <p class="mt8" style="font-size:13px;"><span class="hl">→ Creates attention</span></p>
+      </div>
+      <div class="c c-a" style="padding:28px 20px;">
+        <p style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">Phase 2 — Consideration</p>
+        <h3 style="font-size:20px;">Decision ← Focus Area</h3>
+        <p style="font-size:13px;">PDP evaluation: fit, size, price, delivery, returns. Confidence must be built here or the user drops off.</p>
+        <p class="mt8" style="font-size:13px;"><span class="hl">→ Needs confidence</span></p>
+      </div>
+      <div class="c" style="padding:28px 20px;">
+        <p style="font-size:10px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">Phase 3 — Acquisition</p>
+        <h3 style="font-size:20px;">Conversion</h3>
+        <p style="font-size:13px;">Add to Bag, confirmation, checkout. Momentum from the decision must carry through.</p>
+        <p class="mt8" style="font-size:13px;"><span class="hl">→ Creates conversion</span></p>
+      </div>
+    </div>
+
+    <blockquote class="mt32 center">"Desire creates attention. Confidence creates conversion."</blockquote>
+
+    <div class="c mt16" style="padding:14px 24px;">
+      <p style="font-size:13px;"><span class="hl">Target user:</span> Urban millennial/Gen Z fashion shopper, age 22–34, buying on mobile. Arrives from social or creator content with <strong class="tw">moderate-to-high intent</strong>. They already like the product visually — the page must help them <strong class="tw">justify and complete</strong> the purchase.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 07 PROBLEM STATEMENT ====== -->
+<div class="slide" data-slide="6">
+  <div class="slide-inner" style="max-width:780px;">
+    <div class="sn">07 / 16</div>
+    <h2 style="font-size:clamp(30px,4vw,48px);">The issue is not product desirability.<br><span class="hl">It is decision confidence at commitment.</span></h2>
+
+    <div class="mt40">
+      <div style="display:flex;gap:14px;margin-bottom:20px;">
+        <span style="font-size:18px;margin-top:2px;">👤</span>
+        <div>
+          <h3>User Need</h3>
+          <p>"I love this overshirt — but <span class="tw">will it fit me?</span> What if the size is wrong? <span class="tw">When will it arrive?</span> Can I return it?"</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;margin-bottom:20px;">
+        <span style="font-size:18px;margin-top:2px;">📉</span>
+        <div>
+          <h3>Business Risk</h3>
+          <p>High PDP drop-off → low Add-to-Bag rate → abandoned carts → size-related returns → <span class="tw">eroded margin and loyalty</span>. The brief confirms: "the site struggles to convert this intent-heavy audience."</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;">
+        <span style="font-size:18px;margin-top:2px;">📱</span>
+        <div>
+          <h3>Why Mobile Worsens It</h3>
+          <p>Small viewports compress info hierarchy. Size guides are painful to navigate. Trust cues scroll off-screen. <span class="tw">Decision fatigue hits faster</span> on a thumb-driven interface.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="c c-left-a mt32" style="padding:16px 22px;">
+      <p style="font-size:13px;"><span class="hl">Hypothesis:</span> High-intent mobile shoppers are not dropping off because the product lacks visual appeal. They hesitate because the PDP does not give enough <strong class="tw">confidence around fit, size, delivery, returns, and confirmation</strong> before Add to Bag.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 08 DESIGN PRINCIPLES ====== -->
+<div class="slide" data-slide="7">
+  <div class="slide-inner">
+    <div class="sn">08 / 16</div>
+    <h2>Design Principles</h2>
+    <p class="sub">Four lenses guiding every redesign decision. Each wireframe maps back to at least one principle.</p>
+
+    <div class="g4 mt32">
+      <div class="c center" style="padding:28px 18px;">
+        <p style="font-size:28px;margin-bottom:14px;">🛡️</p>
+        <h3>Confidence Before Commitment</h3>
+        <p style="font-size:13px;">Fit, delivery, and return reassurance must appear <span class="hl">before</span> the user is asked to commit.</p>
+      </div>
+      <div class="c center" style="padding:28px 18px;">
+        <p style="font-size:28px;margin-bottom:14px;">📌</p>
+        <h3>Keep Users In Context</h3>
+        <p style="font-size:13px;">Bottom sheets, inline selectors, and overlays — never navigate the user away from the product.</p>
+      </div>
+      <div class="c center" style="padding:28px 18px;">
+        <p style="font-size:28px;margin-bottom:14px;">📏</p>
+        <h3>Make Sizing Guided</h3>
+        <p style="font-size:13px;">Size selection should be supported with recommendations, model reference, and a recovery path.</p>
+      </div>
+      <div class="c center" style="padding:28px 18px;">
+        <p style="font-size:28px;margin-bottom:14px;">✨</p>
+        <h3>Reassurance Near CTA</h3>
+        <p style="font-size:13px;">Delivery date, free exchange, and fit confidence — within thumb reach of "Add to Bag".</p>
+      </div>
+    </div>
+
+    <div class="c mt24" style="padding:16px 22px;">
+      <p style="font-size:13px;color:var(--text-muted);"><strong class="tw">Design rule:</strong> The product remains the primary visual. The redesign should feel like <span class="hl">editorial commerce</span> — monochrome foundation, full-bleed imagery, strong type hierarchy, and deliberate whitespace. Premium, not noisy.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 09 UX FLOW ====== -->
+<div class="slide" data-slide="8">
+  <div class="slide-inner" style="max-width:1400px; padding:0 60px;">
+    <div class="sn">09 / 16</div>
+    
+    <!-- Header -->
+    <div style="margin-top: 60px;">
+      <h2 style="font-size: 50px; font-weight: 700; color: #111111; margin-bottom: 0;">App Flow + User Flow with Fit Confidence</h2>
+      <p style="font-size: 24px; font-weight: 400; color: #6B665F; margin-top: 16px;">Product Decision Flow: PDP → Variant Selection → Add to Bag</p>
+    </div>
+
+    <!-- App Flow Stepper -->
+    <div style="background: #FFFDF8; border: 1px solid #D8D0C4; border-radius: 24px; height: 80px; display: flex; align-items: center; padding: 0 32px; margin-top: 64px; gap: 16px;">
+      <span style="font-size: 16px; font-weight: 700; color: #111111; margin-right: 16px;">App flow</span>
+      
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: nowrap;">
+        <!-- Pills and Arrows -->
+        <div class="flow-pill">Entry</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-pill">PDP</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-pill flow-pill-highlight">Fit preview</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-pill">Select size</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-pill">Size guide</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-pill flow-pill-highlight">M selected</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-pill">Add to Bag</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-pill flow-pill-highlight">Confirmation</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-pill">Checkout</div>
+      </div>
+    </div>
+
+    <!-- Three User Flow Cards -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 76px;">
+      <!-- Card 1 -->
+      <div style="background: #FFFDF8; border: 1px solid #D8D0C4; border-radius: 16px; padding: 24px; min-height: 180px;">
+        <h3 style="font-size: 16px; font-weight: 700; color: #1F6D47; margin-bottom: 16px;">Primary happy path</h3>
+        <p style="font-size: 14px; line-height: 1.6; color: #111111; margin-bottom: 24px;">
+          PDP → Fit preview → Select Size → M recommended<br>
+          Select M → Add to Bag → Confirmation → Checkout
+        </p>
+        <p style="font-size: 12px; color: #6B665F; line-height: 1.5;">Best path for high-intent shoppers who accept the recommendation.</p>
+      </div>
+
+      <!-- Card 2 -->
+      <div style="background: #FFFDF8; border: 1px solid #D8D0C4; border-radius: 16px; padding: 24px; min-height: 180px;">
+        <h3 style="font-size: 16px; font-weight: 700; color: #275EFE; margin-bottom: 16px;">Alternate flow: unsure about size</h3>
+        <p style="font-size: 14px; line-height: 1.6; color: #111111; margin-bottom: 24px;">
+          Size Selector → Open Size Guide → Check measurements<br>
+          See M recommended · 87% match → Select M
+        </p>
+        <p style="font-size: 12px; color: #6B665F; line-height: 1.5;">The guide recovers hesitation before it becomes abandonment.</p>
+      </div>
+
+      <!-- Card 3 -->
+      <div style="background: #FFFDF8; border: 1px solid #D8D0C4; border-radius: 16px; padding: 24px; min-height: 180px;">
+        <h3 style="font-size: 16px; font-weight: 700; color: #B65B4F; margin-bottom: 16px;">Edge flow: size unavailable</h3>
+        <p style="font-size: 14px; line-height: 1.6; color: #111111; margin-bottom: 24px;">
+          Preferred size is disabled and clearly labelled.<br>
+          Notify Me captures intent instead of creating a dead end.<br>
+          User can still choose another available size.
+        </p>
+        <p style="font-size: 12px; color: #6B665F; line-height: 1.5;">This shows how the design handles an unavailable size without losing user intent.</p>
+      </div>
+    </div>
+
+    <!-- Bottom Flow Principle Bar -->
+    <div style="background: #111111; border-radius: 20px; height: 72px; display: flex; align-items: center; padding: 0 32px; margin-top: 64px;">
+      <span style="font-size: 14px; font-weight: 700; color: #FFFFFF; width: 140px; flex-shrink: 0;">Flow principle</span>
+      <span style="font-size: 14px; font-weight: 400; color: #D8D2C8; line-height: 1.4;">Create confidence before conversion: fit, size, delivery, exchange and confirmation appear exactly where they affect Add-to-Bag decisions.</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ====== 10 WIREFRAMES ====== -->
+<div class="slide" data-slide="9">
+  <div class="slide-inner">
+    <div class="sn">10 / 16</div>
+    <h2>Wireframes</h2>
+    <p class="sub">Five-screen product decision flow. Focused on sizing guidance and decision support.</p>
+
+    <!-- Redesigned wireframe cards with high-quality images -->
+    <div class="wf-row">
+      <!-- Screen 1: PDP Select Size -->
+      <div>
+        <div class="wf-img-card">
+          <img loading="lazy" src="assets/wf_pdp_select_size.png" alt="01 PDP Select Size">
+        </div>
+        <div class="wf-label">01 PDP SELECT SIZE</div>
+      </div>
+      <div class="wf-arrow">→</div>
+
+      <!-- Screen 2: Why M Works -->
+      <div>
+        <div class="wf-img-card">
+          <img loading="lazy" src="assets/wf_why_works.png" alt="02 Why M Works">
+        </div>
+        <div class="wf-label">02 WHY M WORKS</div>
+      </div>
+      <div class="wf-arrow">→</div>
+
+      <!-- Screen 3: Size Guide -->
+      <div>
+        <div class="wf-img-card">
+          <img loading="lazy" src="assets/wf_size_guide.png" alt="03 Size Guide">
+        </div>
+        <div class="wf-label">03 SIZE GUIDE</div>
+      </div>
+      <div class="wf-arrow">→</div>
+
+      <!-- Screen 4: Selected State -->
+      <div>
+        <div class="wf-img-card">
+          <img loading="lazy" src="assets/wf_pdp_add_to_bag.png" alt="04 Selected State">
+        </div>
+        <div class="wf-label">04 SELECTED STATE</div>
+      </div>
+      <div class="wf-arrow">→</div>
+
+      <!-- Screen 5: Added to Bag -->
+      <div>
+        <div class="wf-img-card">
+          <img loading="lazy" src="assets/wf_added_to_bag.png" alt="05 Added to Bag">
+        </div>
+        <div class="wf-label">05 ADDED TO BAG</div>
+      </div>
+    </div>
+
+    <div class="c c-left-a mt24" style="padding:14px 20px;">
+      <p style="font-size:13px;"><span class="hl">Fit Confidence thread:</span> The "M · 87% match" signal appears in <strong class="tw">all 5 screens</strong> — PDP preview, fit confidence drawer ("Why M"), size guide, selected state, and add-to-bag confirmation. It creates a <span class="hl">persistent trust layer</span> across the entire decision journey.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 11 FINAL UI ====== -->
+<div class="slide" data-slide="10">
+  <div class="slide-inner" style="max-width:1200px;">
+    <div class="sn">11 / 16</div>
+    <h2>Final UI</h2>
+    <p class="sub">Five polished, high-fidelity mobile screens mapping out the entire fit decision flow.</p>
+
+    <div class="five-mockups-grid">
+      <div class="mockup-item">
+         <img loading="lazy" src="assets/hifi_pdp_inactive.png" class="zoomable-image" data-caption="01 PDP with Fit Confidence" alt="01 PDP with Fit Confidence">
+        <p class="mockup-lbl">01 PDP with Fit Confidence</p>
+      </div>
+      <div class="mockup-item">
+        <img loading="lazy" src="assets/hifi_pdp_active.png" class="zoomable-image" data-caption="02 Interactive Fit Discovery Sheet" alt="02 Interactive Fit Discovery Sheet">
+        <p class="mockup-lbl">02 Interactive Fit Discovery Sheet</p>
+      </div>
+      <div class="mockup-item">
+        <img loading="lazy" src="assets/hifi_why_m_works.png" class="zoomable-image" data-caption="02.1 Size Guide" alt="02.1 Size Guide">
+        <p class="mockup-lbl">02.1 Size Guide</p>
+      </div>
+      <div class="mockup-item">
+        <img loading="lazy" src="assets/hifi_size_guide.png" class="zoomable-image" data-caption="03 Size Selected State" alt="03 Size Selected State">
+        <p class="mockup-lbl">03 Size Selected State</p>
+      </div>
+      <div class="mockup-item">
+        <img loading="lazy" src="assets/hifi_added_to_bag.png" class="zoomable-image" data-caption="04 Added to Bag Confirmation" alt="04 Added to Bag Confirmation">
+        <p class="mockup-lbl">04 Added to Bag Confirmation</p>
+      </div>
+    </div>
+
+    <div class="c mt24" style="padding:16px 22px;">
+      <p style="font-size:13px;color:var(--text-muted);"><strong class="tw">Visual direction:</strong> Confident editorial commerce — monochrome foundation, one warm accent, full-bleed product imagery, strong type hierarchy, hard-edged controls, minimal elevation, and deliberate whitespace. The product is always the hero.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 12 FIT CONFIDENCE CONTRACT ====== -->
+<div class="slide" data-slide="11">
+  <div class="slide-inner" style="max-width:1300px;">
+    <div class="sn">12 / 16</div>
+
+    <!-- Unified 16:9 Concept Board Grid -->
+    <div class="slide-11-grid">
+      
+      <!-- LEFT CONCEPT PANEL -->
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div style="font-family: var(--font-h); font-size: 52px; font-weight: 800; line-height: 1.05; color: #111111; text-transform: uppercase;">FIT<br>CONFIDENCE<br>CONTRACT</div>
+        <p style="font-size: 15px; color: #5B46D6; font-weight: 600; line-height: 1.3; margin-bottom: 8px;">The PDP that gives shoppers a confidence contract before they buy.</p>
+
+        <div class="c" style="border-left:3px solid var(--accent); padding:14px 16px; border-radius:10px;">
+          <p style="font-size:9px; color:var(--accent); font-weight:700; letter-spacing:1.5px; margin-bottom:4px; text-transform:uppercase;">THE BIG INSIGHT</p>
+          <p style="font-size:12px; line-height:1.45;">Size and fit uncertainty is one of the biggest reasons shoppers hesitate. They want to know: Will this fit me? What if it does not?</p>
+        </div>
+        
+        <div class="c" style="padding:14px 16px; border-radius:10px;">
+          <p style="font-size:9px; color:var(--accent); font-weight:700; letter-spacing:1.5px; margin-bottom:4px; text-transform:uppercase;">THE CONCEPT</p>
+          <p style="font-size:13px; line-height:1.45;">A decision-support system that combines garment data, model reference, and buyer feedback into a brand-backed exchange promise.</p>
+        </div>
+
+        <div class="c" style="background:var(--accent-glow); border-color:#D6CCFF; padding:14px 16px; border-radius:10px;">
+          <p style="font-size:9px; color:#5B46D6; font-weight:700; letter-spacing:1.5px; margin-bottom:4px; text-transform:uppercase;">THE PROMISE</p>
+          <p style="font-size:13px; font-weight:700; margin-bottom:2px; color:#5B46D6;">Recommended size: M (87% Match)</p>
+          <p style="font-size:11.5px; line-height:1.4; color:var(--text-dim);">Backed by: Free size exchange if our recommendation is wrong.</p>
+        </div>
+      </div>
+
+      <!-- MIDDLE/RIGHT: THE THREE HI-FI MOBILE UI MOCKUPS WITH ANNOTATIONS -->
+      <div class="mockups-wrapper">
+        
+        <!-- Screen 01 -->
+        <div class="mockup-card">
+          <div class="mockup-img-wrap">
+            <img loading="lazy" src="assets/hifi_pdp_inactive.png" class="zoomable-image" data-caption="01 PDP with Fit Confidence" alt="01 PDP with Fit Confidence">
+            
+            <!-- Annotations -->
+            <div class="anno-card anno-absolute anno-s1-1">
+              Instant reassurance appears before details become too deep.
+            </div>
+            <div class="anno-card anno-absolute anno-s1-2">
+              Explains why this size is recommended before commitment.
+            </div>
+          </div>
+          <div style="margin-top: 12px; text-align: center;">
+            <span style="font-family: var(--font-h); font-size: 10px; font-weight: 700; color: var(--accent); display: block; letter-spacing: 1px; margin-bottom: 2px;">01</span>
+            <h3 style="font-family: var(--font-h); font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text); margin-bottom: 2px; letter-spacing: 0.5px;">PDP WITH FIT CONFIDENCE</h3>
+            <p style="font-size: 10px; color: var(--text-dim); line-height: 1.35; max-width: 210px; margin: 0 auto;">Builds instant trust and reduces size hesitation before commitment.</p>
+          </div>
+        </div>
+
+        <!-- Screen 02 -->
+        <div class="mockup-card">
+          <div class="mockup-img-wrap">
+            <img loading="lazy" src="assets/hifi_why_m_works.png" class="zoomable-image" data-caption="02 Why M Works Sheet" alt="02 Why M Works Sheet">
+            
+            <!-- Annotations -->
+            <div class="anno-card anno-absolute anno-s2-1">
+              Real buyer feedback summarized into decision signals.
+            </div>
+            <div class="anno-card anno-absolute anno-s2-2">
+              Breaks down fit by key attributes to build logical trust.
+            </div>
+          </div>
+          <div style="margin-top: 12px; text-align: center;">
+            <span style="font-family: var(--font-h); font-size: 10px; font-weight: 700; color: var(--accent); display: block; letter-spacing: 1px; margin-bottom: 2px;">02</span>
+            <h3 style="font-family: var(--font-h); font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text); margin-bottom: 2px; letter-spacing: 0.5px;">"WHY THIS SIZE?" SHEET</h3>
+            <p style="font-size: 10px; color: var(--text-dim); line-height: 1.35; max-width: 210px; margin: 0 auto;">Explains the recommendation with evidence-based decision signals.</p>
+          </div>
+        </div>
+
+        <!-- Screen 03 -->
+        <div class="mockup-card">
+          <div class="mockup-img-wrap">
+            <img loading="lazy" src="assets/hifi_added_to_bag.png" class="zoomable-image" data-caption="03 Confirmation Contract" alt="03 Confirmation Contract">
+            
+            <!-- Annotations -->
+            <div class="anno-card anno-absolute anno-s3-1">
+              Brand-backed promise reduces fear of wrong choice.
+            </div>
+          </div>
+          <div style="margin-top: 12px; text-align: center;">
+            <span style="font-family: var(--font-h); font-size: 10px; font-weight: 700; color: var(--accent); display: block; letter-spacing: 1px; margin-bottom: 2px;">03</span>
+            <h3 style="font-family: var(--font-h); font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text); margin-bottom: 2px; letter-spacing: 0.5px;">CONFIRMATION CONTRACT</h3>
+            <p style="font-size: 10px; color: var(--text-dim); line-height: 1.35; max-width: 210px; margin: 0 auto;">Reinforces confidence and provides a safety net for the transaction.</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- BOTTOM SECTIONS: HOW IT WORKS + IMPACT WE AIM TO DELIVER -->
+    <div class="bottom-section-grid">
+      
+      <!-- HOW IT WORKS -->
+      <div>
+        <div class="how-it-works-title">How It Works (Data to Decision)</div>
+        <div class="flow-steps">
+          <div class="step-box">
+            <span class="step-box-num">01</span>
+            <span class="step-box-title">Fit Profile</span>
+            <span class="step-box-desc">One-time data collection for personalized size recommendation</span>
+          </div>
+          <div class="step-box">
+            <span class="step-box-num">02</span>
+            <span class="step-box-title">Garment Data</span>
+            <span class="step-box-desc">Measurements, fabric, stretch, weight</span>
+          </div>
+          <div class="step-box">
+            <span class="step-box-num">03</span>
+            <span class="step-box-title">Model Ref</span>
+            <span class="step-box-desc">Height, size worn, fit notes</span>
+          </div>
+          <div class="step-box">
+            <span class="step-box-num">04</span>
+            <span class="step-box-title">Buyer Feedback</span>
+            <span class="step-box-desc">Reviews on fit, comfort, photos</span>
+          </div>
+          <div class="step-box highlight">
+            <span class="step-box-num" style="color:var(--accent);">05</span>
+            <span class="step-box-title">Fit Score</span>
+            <span class="step-box-desc">Algorithm matches fit profile with garment data and recommends best size</span>
+          </div>
+        </div>
+        <p style="font-size:9px; color:var(--text-muted); margin-top:8px; display:flex; align-items:center; gap:4px;">
+          <span>🔒</span> Privacy first. No body scan required. Customer trust by design.
+        </p>
+      </div>
+
+      <!-- IMPACT WE AIM TO DELIVER -->
+      <div>
+        <div class="impact-title">Impact We Aim to Deliver</div>
+        <div class="impact-metrics-row">
+          <div class="metric-card">
+            <div class="metric-card-val">+15–25%</div>
+            <div class="metric-card-lbl">Add-to-Cart Rate</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card-val">-20–30%</div>
+            <div class="metric-card-lbl">Size-related Returns</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card-val" style="color:var(--green)">Higher</div>
+            <div class="metric-card-lbl">CSAT & Trust</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card-val" style="color:var(--green)">Stronger</div>
+            <div class="metric-card-lbl">Basket Value (AOV)</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card-val" style="color:var(--green)">Lower</div>
+            <div class="metric-card-lbl">Carbon Footprint</div>
+          </div>
+        </div>
+        <p style="font-size: 8.5px; color: var(--text-muted); margin-top: 8px; font-style: italic; text-align: right;">*Intended target impact, not guaranteed results.</p>
+      </div>
+
+    </div>
+
+    <!-- THE STRATEGIC SHIFT DARK FOOTER -->
+    <div class="strategic-shift-dark-card">
+      <div>
+        <div class="shift-left-title">The Strategic Shift</div>
+        <div class="shift-left-heading">From “Hope it fits” to <span>“We’ve got your fit.”</span></div>
+        <p class="shift-left-desc">Turning the PDP from a passive product page into a decision-assurance system that helps shoppers choose confidently and reduces the friction of returns.</p>
+      </div>
+      <div class="shift-right-inner">
+        <div class="shift-right-title">MVP TODAY. SMARTER TOMORROW.</div>
+        <p class="shift-right-desc">Start with rule-based fit logic + review intelligence. Evolve into AI-powered fit prediction and virtual try-on.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ====== 13 HOW FIT CONFIDENCE IS CALCULATED ====== -->
+<div class="slide" data-slide="12">
+  <div class="slide-inner" style="max-width:1280px;">
+    <div class="sn">13 / 16</div>
+    <h2>How Fit Confidence Is Calculated</h2>
+    <p class="sub">The supporting data layer behind the PDP recommendation — where the <span class="hl">87% match</span> comes from.</p>
+
+    <div class="c c-left-a mt16" style="padding:12px 18px;">
+      <p style="font-size:12px;color:var(--text-dim);"><strong class="tw">Framing:</strong> This is not part of the PDP itself. It is the lightweight fit profile collected before the recommendation is shown.</p>
+    </div>
+
+    <!-- 4-STEP FIT PROFILE FLOW IMAGES -->
+    <div style="display:flex; gap:22px; justify-content:center; align-items:flex-end; margin-top:22px;">
+      <div style="text-align:center;">
+        <img loading="lazy" src="assets/fit_profile_welcome.png" class="zoomable-image" data-caption="01 Fit Profile — Welcome" alt="Fit Profile Welcome" style="width:160px; border-radius:14px; border:1px solid var(--border); box-shadow:0 10px 28px rgba(0,0,0,0.12);">
+        <p style="font-size:10px; color:var(--text-muted); margin-top:6px; font-family:var(--font-h); letter-spacing:0.5px;">01 · INTRO</p>
+      </div>
+      <div class="wf-arrow" style="margin:0 0 30px;">→</div>
+      <div style="text-align:center;">
+        <img loading="lazy" src="assets/fit_profile_metrics.png" class="zoomable-image" data-caption="02 Fit Profile — Basic Stats" alt="Fit Profile Metrics" style="width:160px; border-radius:14px; border:1px solid var(--border); box-shadow:0 10px 28px rgba(0,0,0,0.12);">
+        <p style="font-size:10px; color:var(--text-muted); margin-top:6px; font-family:var(--font-h); letter-spacing:0.5px;">02 · BASIC STATS</p>
+      </div>
+      <div class="wf-arrow" style="margin:0 0 30px;">→</div>
+      <div style="text-align:center;">
+        <img loading="lazy" src="assets/fit_profile_brands.png" class="zoomable-image" data-caption="03 Fit Profile — Brands That Fit" alt="Fit Profile Brands" style="width:160px; border-radius:14px; border:1px solid var(--border); box-shadow:0 10px 28px rgba(0,0,0,0.12);">
+        <p style="font-size:10px; color:var(--text-muted); margin-top:6px; font-family:var(--font-h); letter-spacing:0.5px;">03 · BRAND FIT</p>
+      </div>
+      <div class="wf-arrow" style="margin:0 0 30px;">→</div>
+      <div style="text-align:center;">
+        <img loading="lazy" src="assets/fit_profile_preferences.png" class="zoomable-image" data-caption="04 Fit Profile — Fit Preference" alt="Fit Profile Preferences" style="width:160px; border-radius:14px; border:1px solid var(--border); box-shadow:0 10px 28px rgba(0,0,0,0.12);">
+        <p style="font-size:10px; color:var(--text-muted); margin-top:6px; font-family:var(--font-h); letter-spacing:0.5px;">04 · FIT PREFERENCE</p>
+      </div>
+    </div>
+
+    <!-- SCORING MODEL + OUTPUT -->
+    <div class="g2 mt24" style="gap:20px; align-items:stretch;">
+      <!-- SCORING MODEL -->
+      <div class="c" style="padding:18px 20px;">
+        <h3 style="color:var(--accent); margin-bottom:12px;">Scoring Model — 5 Weighted Signals</h3>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-family:var(--font-h); font-weight:700; color:var(--accent); min-width:38px;">35%</span>
+            <span style="flex:1; font-size:12px; color:var(--text-dim);">Garment measurement match</span>
+            <div style="height:6px; background:var(--accent-glow); border-radius:3px; width:90px;"><div style="height:100%; width:100%; background:var(--accent); border-radius:3px;"></div></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-family:var(--font-h); font-weight:700; color:var(--accent); min-width:38px;">20%</span>
+            <span style="flex:1; font-size:12px; color:var(--text-dim);">Fit preference match</span>
+            <div style="height:6px; background:var(--accent-glow); border-radius:3px; width:90px;"><div style="height:100%; width:57%; background:var(--accent); border-radius:3px;"></div></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-family:var(--font-h); font-weight:700; color:var(--accent); min-width:38px;">20%</span>
+            <span style="flex:1; font-size:12px; color:var(--text-dim);">Buyer feedback</span>
+            <div style="height:6px; background:var(--accent-glow); border-radius:3px; width:90px;"><div style="height:100%; width:57%; background:var(--accent); border-radius:3px;"></div></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-family:var(--font-h); font-weight:700; color:var(--accent); min-width:38px;">15%</span>
+            <span style="flex:1; font-size:12px; color:var(--text-dim);">Brand fit history</span>
+            <div style="height:6px; background:var(--accent-glow); border-radius:3px; width:90px;"><div style="height:100%; width:43%; background:var(--accent); border-radius:3px;"></div></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-family:var(--font-h); font-weight:700; color:var(--accent); min-width:38px;">10%</span>
+            <span style="flex:1; font-size:12px; color:var(--text-dim);">Model reference similarity</span>
+            <div style="height:6px; background:var(--accent-glow); border-radius:3px; width:90px;"><div style="height:100%; width:29%; background:var(--accent); border-radius:3px;"></div></div>
+          </div>
+        </div>
+        <p style="font-size:11px; color:var(--text-muted); margin-top:12px;"><strong class="tw">Example:</strong> 31/35 + 19/20 + 12/15 + 8/10 + 17/20 = <span class="hl">87 / 100</span></p>
+      </div>
+
+      <!-- OUTPUT -->
+      <div class="c c-a" style="padding:18px 20px; display:flex; flex-direction:column; justify-content:center;">
+        <p style="font-size:9px; color:var(--accent); font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:10px;">Output On PDP</p>
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:14px;">
+          <div style="font-family:var(--font-h); font-size:38px; font-weight:800; color:var(--accent); line-height:1;">87%</div>
+          <div>
+            <p style="font-size:14px; font-weight:700; color:var(--text); margin-bottom:2px;">Recommended size: M</p>
+            <p style="font-size:11px; color:var(--text-dim);">Relaxed chest · True shoulder · Safe sleeve</p>
+          </div>
+        </div>
+        <div style="background:var(--accent-glow); border:1px solid var(--accent-border); border-radius:8px; padding:10px 12px; margin-bottom:10px;">
+          <p style="font-size:11px; color:var(--accent); font-weight:600;">M works for you because</p>
+          <p style="font-size:11px; color:var(--text-dim); margin-top:3px; line-height:1.45;">Chest: Comfortable · Shoulder: True to fit · Sleeve: Slightly relaxed · Length: Standard</p>
+        </div>
+        <p style="font-size:10px; color:var(--text-muted);">Backed by <strong class="tw">free size exchange</strong> if recommendation is wrong.</p>
+      </div>
+    </div>
+
+    <!-- BOTTOM NOTE -->
+    <div class="c mt16" style="padding:12px 18px; display:flex; align-items:center; gap:10px;">
+      <span style="font-size:14px;">🔒</span>
+      <p style="font-size:12px; color:var(--text-dim);"><strong class="tw">Privacy first.</strong> No body scan required. The score is a practical confidence signal — not a perfect body prediction. MVP uses rule-based scoring; evolves toward AI-assisted fit prediction.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 14 IMPACT & VALIDATION ====== -->
+<div class="slide" data-slide="13">
+  <div class="slide-inner">
+    <div class="sn">14 / 16</div>
+    <h2>Impact &amp; Validation</h2>
+    <p class="sub">Proposed metrics and a lightweight usability test plan to validate the redesign.</p>
+
+    <div class="g2 mt24">
+      <div>
+        <h3 class="mb12" style="color:var(--accent);">Success Metrics</h3>
+        <div class="c center mb8" style="padding:20px;border-top:3px solid var(--accent);">
+          <div class="mv">↑ ATB Rate</div>
+          <div class="ml">Primary: Mobile PDP Add-to-Bag conversion</div>
+        </div>
+        <div class="g2">
+          <div class="c center" style="padding:16px;">
+            <div class="mv" style="font-size:20px;">↑</div><div class="ml">Size-selection completion</div>
+          </div>
+          <div class="c center" style="padding:16px;">
+            <div class="mv" style="font-size:20px;">↓</div><div class="ml">Time from PDP to ATB</div>
+          </div>
+          <div class="c center" style="padding:16px;">
+            <div class="mv" style="font-size:20px;">↑</div><div class="ml">Size guide → select recovery</div>
+          </div>
+          <div class="c center" style="padding:16px;">
+            <div class="mv" style="font-size:20px;">↑</div><div class="ml">ATB → Checkout CTR</div>
+          </div>
+        </div>
+        <div class="c c-left-r mt8" style="padding:12px 18px;">
+          <p style="font-size:12px;"><strong class="tw">Guardrails:</strong> Size-related return rate and exchange support contacts must not increase.</p>
+        </div>
+      </div>
+      <div>
+        <h3 class="mb12" style="color:var(--accent);">Usability Test Plan</h3>
+        <table>
+          <thead><tr><th>Task</th><th>Success Signal</th></tr></thead>
+          <tbody>
+            <tr><td class="tw">Identify price, fit, sizes</td><td>No prompting needed</td></tr>
+            <tr><td class="tw">Choose correct size</td><td>Completes without hesitation</td></tr>
+            <tr><td class="tw">Recover via size guide</td><td>Returns + selects, no context loss</td></tr>
+            <tr><td class="tw">Add to bag</td><td>Understands confirmation + next step</td></tr>
+          </tbody>
+        </table>
+        <div class="c mt8" style="padding:14px 18px;">
+          <p style="font-size:12px;"><span class="hl">Setup:</span> 5 mobile fashion shoppers. Scenario: "You found this overshirt through a creator post. Decide whether it suits you and add the correct size to your bag."</p>
+        </div>
+        <div class="c mt8" style="padding:14px 18px;">
+          <p style="font-size:12px;"><span class="hl">Collect:</span> Transcript quotes, hesitation points, confidence rating (1–5), task completion time, post-task "would you buy" response.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 15 PRIORITISATION ====== -->
+<div class="slide" data-slide="14">
+  <div class="slide-inner">
+    <div class="sn">15 / 16</div>
+    <h2>Prioritisation &amp; Next Steps</h2>
+    <p class="sub">What to ship now for maximum impact vs. what to experiment with later.</p>
+
+    <div class="g2 mt24">
+      <div>
+        <h3 style="color:var(--accent);margin-bottom:14px;">🟡 Ship Now — High Impact, Feasible</h3>
+        <div class="pri"><div class="pri-dot h"></div><span style="font-size:14px;color:var(--text-dim);flex:1;">Improve PDP first-fold hierarchy and product understanding</span></div>
+        <div class="pri"><div class="pri-dot h"></div><span style="font-size:14px;color:var(--text-dim);flex:1;">Add Fit Confidence Card before size selection</span></div>
+        <div class="pri"><div class="pri-dot h"></div><span style="font-size:14px;color:var(--text-dim);flex:1;">Guided size selector bottom sheet with recommendation</span></div>
+        <div class="pri"><div class="pri-dot h"></div><span style="font-size:14px;color:var(--text-dim);flex:1;">Size guide with recovery path back to selector</span></div>
+        <div class="pri"><div class="pri-dot h"></div><span style="font-size:14px;color:var(--text-dim);flex:1;">Move delivery + exchange reassurance near CTA</span></div>
+        <div class="pri"><div class="pri-dot h"></div><span style="font-size:14px;color:var(--text-dim);flex:1;">Rich Added-to-Bag confirmation with checkout momentum</span></div>
+      </div>
+      <div>
+        <h3 style="color:var(--text-muted);margin-bottom:14px;">⚪ Explore Later — Requires Data</h3>
+        <div class="pri"><div class="pri-dot m"></div><span style="font-size:14px;color:var(--text-dim);flex:1;">Unavailable-size "Notify Me" recovery flow</span></div>
+        <div class="pri"><div class="pri-dot m"></div><span style="font-size:14px;color:var(--text-dim);flex:1;">Personalised ML-based size recommendation</span></div>
+        <div class="pri"><div class="pri-dot m"></div><span style="font-size:14px;color:var(--text-dim);flex:1;">Save fit preference for repeat purchases</span></div>
+        <div class="pri"><div class="pri-dot m"></div><span style="font-size:14px;color:var(--text-dim);flex:1;">AR / virtual try-on integration</span></div>
+        <div class="pri"><div class="pri-dot m"></div><span style="font-size:14px;color:var(--text-dim);flex:1;">Editorial story module on PDP</span></div>
+        <div class="pri"><div class="pri-dot m"></div><span style="font-size:14px;color:var(--text-dim);flex:1;">Full checkout flow redesign</span></div>
+
+        <div class="c c-left-a mt24" style="padding:14px 18px;">
+          <h3 style="font-size:13px;margin-bottom:4px;">Senior Trade-off</h3>
+          <p style="font-size:12px;">I chose depth at the purchase decision point instead of breadth across the funnel. I used transparent stock info, avoided manufactured urgency. Advanced sizing personalization is a later experiment — not a launch dependency. I would validate all assumptions with analytics, return-reason logs, and usability sessions before rollout.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 16 FINAL TAKEAWAY ====== -->
+<div class="slide" data-slide="15">
+  <div class="slide-inner center" style="max-width:780px;">
+    <div class="sn">16 / 16</div>
+    <h2 style="font-size:clamp(26px,3.5vw,40px);">Final Takeaway</h2>
+
+    <blockquote style="text-align:left;margin:28px auto;">"The redesign should not be judged only by how polished the UI looks. It should be judged by whether it <span class="hl">reduces uncertainty at the product decision moment</span> and helps shoppers move from desire to confident Add to Bag."</blockquote>
+
+    <div class="g3 mt32">
+      <div class="c center" style="padding:24px 16px;">
+        <div class="mv" style="font-size:22px;">↑ Add-to-Bag</div>
+        <div class="ml">Higher conversion from PDP</div>
+      </div>
+      <div class="c center" style="padding:24px 16px;">
+        <div class="mv" style="font-size:22px;">↓ Drop-off</div>
+        <div class="ml">Lower PDP abandonment</div>
+      </div>
+      <div class="c center" style="padding:24px 16px;">
+        <div class="mv" style="font-size:22px;">↓ Returns</div>
+        <div class="ml">Fewer size-related returns</div>
+      </div>
+    </div>
+
+    <div class="c mt32" style="padding:18px 24px;text-align:left;">
+      <p style="font-size:13px;"><span class="hl">Business impact:</span> Improving decision confidence supports higher ATB rate, lower PDP drop-off, faster size-selection completion, stronger checkout momentum, fewer avoidable size-related returns, and better repeat purchase confidence.</p>
+    </div>
+
+    <div style="width:50px;height:2px;background:var(--accent);margin:32px auto 16px;"></div>
+    <p style="font-size:15px;color:var(--text-dim);margin-bottom:4px;">Mohd Hayaat Ali</p>
+    <p style="font-size:12px;color:var(--text-muted);letter-spacing:1.5px;">INFINITE LOCUS · PRODUCT DECISION FLOW REDESIGN</p>
+    <p style="font-size:13px;color:var(--text-muted);margin-top:12px;">Thank you for reviewing.</p>
+  </div>
+</div>
+
+</div>
+</main>
+
+<!-- ===== NAV BAR ===== -->
+<nav class="nav">
+  <div class="nav-hint" style="font-size: 11px; font-weight: 500;">
+    Navigate: <span class="nav-key">←</span> / <span class="nav-key">→</span> keys or swipe on mobile
+  </div>
+  <div class="nav-dots" id="navDots"></div>
+  <div class="nav-ctrl">
+    <button class="nav-btn" id="prevBtn" aria-label="Previous">←</button>
+    <span class="nav-cnt" id="navCnt">1 / 16</span>
+    <button class="nav-btn" id="nextBtn" aria-label="Next">→</button>
+  </div>
+</nav>
+
+<script>
+// Prevent caching on local file load
+(function() {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has('v')) {
+    url.searchParams.set('v', Date.now());
+    window.location.replace(url.toString());
+  }
+})();
+
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#131316',
+    primaryTextColor: '#EEEEE8',
+    primaryBorderColor: '#C9993A',
+    lineColor: '#C9993A',
+    secondaryColor: '#111',
+    tertiaryColor: '#131316',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: '13px'
+  },
+  flowchart: { curve: 'basis', padding: 16, htmlLabels: true }
+});
+
+// ===== NAVIGATION =====
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+let cur = 0;
+
+const dots = document.getElementById('navDots');
+for (let i = 0; i < total; i++) {
+  const d = document.createElement('div');
+  d.className = 'nav-dot' + (i === 0 ? ' on' : '');
+  d.setAttribute('role', 'button');
+  d.setAttribute('tabindex', '0');
+  d.setAttribute('aria-label', `Go to slide ${i + 1}`);
+  d.onclick = () => go(i);
+  dots.appendChild(d);
+}
+
+function go(n) {
+  if (n < 0 || n >= total || n === cur) return;
+  slides[cur].classList.remove('active');
+  cur = n;
+  slides[cur].classList.add('active');
+  slides[cur].scrollTop = 0;
+  document.getElementById('navCnt').textContent = `${cur + 1} / ${total}`;
+  dots.querySelectorAll('.nav-dot').forEach((d, i) => d.classList.toggle('on', i === cur));
+}
+
+// Global key listeners on window for focus-independence
+window.addEventListener('keydown', e => {
+  // Disable slide navigation keys when lightbox is active
+  const lb = document.getElementById('lightbox');
+  if (lb && lb.classList.contains('active')) {
+    if (e.key === 'Escape') {
+      closeLightbox();
+    }
+    return;
+  }
+  
+  if (e.key === 'ArrowRight' || e.key === 'Right') {
+    e.preventDefault();
+    go(cur + 1);
+  }
+  if (e.key === 'ArrowLeft' || e.key === 'Left') {
+    e.preventDefault();
+    go(cur - 1);
+  }
+}, true);
+
+document.getElementById('prevBtn').onclick = () => go(cur - 1);
+document.getElementById('nextBtn').onclick = () => go(cur + 1);
+
+let tx = 0;
+document.addEventListener('touchstart', e => { tx = e.changedTouches[0].screenX; });
+document.addEventListener('touchend', e => {
+  const lb = document.getElementById('lightbox');
+  if (lb && lb.classList.contains('active')) return;
+  const d = tx - e.changedTouches[0].screenX;
+  if (Math.abs(d) > 60) d > 0 ? go(cur + 1) : go(cur - 1);
+});
+
+// ===== LIGHTBOX =====
+const lightbox = document.createElement('div');
+lightbox.id = 'lightbox';
+lightbox.className = 'lightbox';
+lightbox.innerHTML = `
+  <span class="lightbox-close" role="button" tabindex="0" aria-label="Close expanded image">&times;</span>
+  <img id="lightboxImg" src="" alt="Expanded View">
+  <div class="lightbox-caption" id="lightboxCaption"></div>
+`;
+document.body.appendChild(lightbox);
+
+const lightboxImg = lightbox.querySelector('#lightboxImg');
+const lightboxCaption = lightbox.querySelector('#lightboxCaption');
+
+function openLightbox(src, captionText) {
+  lightboxImg.src = src;
+  lightboxImg.alt = captionText || 'Expanded View';
+  lightboxCaption.textContent = captionText;
+  lightbox.style.display = 'flex';
+  setTimeout(() => {
+    lightbox.classList.add('active');
+    lightbox.style.opacity = '1';
+  }, 10);
+}
+
+function closeLightbox() {
+  lightbox.style.opacity = '0';
+  lightboxImg.style.transform = 'scale(0.93) translateY(20px)';
+  setTimeout(() => {
+    lightbox.classList.remove('active');
+    lightbox.style.display = 'none';
+    lightboxImg.src = '';
+    lightboxImg.style.transform = '';
+  }, 300);
+}
+
+// Hook up to all zoomable images and wireframe image cards
+document.querySelectorAll('.wf-img-card, .zoomable-image').forEach(card => {
+  const img = card.tagName === 'IMG' ? card : card.querySelector('img');
+  const label = card.getAttribute('data-caption') || (card.nextElementSibling ? card.nextElementSibling.textContent : 'Wireframe');
+  card.style.cursor = 'zoom-in';
+  card.onclick = (e) => {
+    e.stopPropagation();
+    openLightbox(img.src, label);
+  };
+});
+
+// Close listeners
+lightbox.onclick = (e) => {
+  if (e.target !== lightboxImg) {
+    closeLightbox();
+  }
+};
+</script>
+</body>
+</html>
